@@ -51,7 +51,7 @@ pub async fn handle_user(username: &str, mut tx: Tx, mut instance: Arc<Mutex<Ins
                         
                         // Show error to the user
                         instance.lock().await
-                            .add_line(None, format!("error: {}", err))
+                            .add_err(&err.to_string())
                             .unwrap();
                     }
                     

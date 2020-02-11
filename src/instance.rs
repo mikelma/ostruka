@@ -111,7 +111,7 @@ impl Instance {
         }
     } 
 
-    pub fn add_line(&mut self, index: Option<usize>, message: String) -> Result<(), io::Error> {
+    pub fn add_line(&mut self, index: Option<usize>, message: &str) -> Result<(), io::Error> {
 
         let index = match index {
             Some(i) => i,
@@ -124,7 +124,7 @@ impl Instance {
                                "The given index is not a valid index. Number too large."));
         }
         
-        self.pages[index].conversation.push(message);
+        self.pages[index].conversation.push(message.to_string());
 
         Ok(())
     }
@@ -139,7 +139,7 @@ impl Instance {
         let formatted = format!("[{}]: {}", sender, txt);
 
         match index {
-            Some(i) => self.add_line(Some(i), formatted)?,
+            Some(i) => self.add_line(Some(i), &formatted)?,
             None => {
                 // Create a new page for the sender
                 let page = Page::new(sender.to_string(), vec![formatted]);
@@ -148,6 +148,11 @@ impl Instance {
         }
 
         Ok(()) 
+    }
+
+    /// Adds an error description to the current page
+    pub fn add_err(&mut self, error: &str) -> Result<(), io::Error> {
+        self.add_line(None, &format!("[ERR]: {}", error))
     }
 
     pub fn add_chat(&mut self, index: usize, message: &mut Vec<String>) -> Result<(), io::Error> {
@@ -197,12 +202,4 @@ impl Instance {
         self.pages.remove(index);
         Ok(())
     }
-    
-    /*
-    pub fn update_recev(&mut self, client: &mut FtpClient) -> Result<(), io::Error> {
-        let mut ls = client.update_recev()?;
-        self.pages[self.current].conversation.append(&mut ls);
-        Ok(())
-    }
-    */
 }

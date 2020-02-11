@@ -32,23 +32,23 @@ pub fn parse_command(input: &String) -> UserCommand {
     let input = input.to_lowercase(); 
 
     // Exit command
-    if input.starts_with("/exit") {
+    if input.starts_with(":exit") {
         UserCommand::Exit
     
     // Join command
-    } else if input.starts_with("/join") {
+    } else if input.starts_with(":join") {
 
         let mut join_name = input.clone();
         let _= join_name.drain(..6); // 6, includes whitespace
 
         UserCommand::Join(join_name)
 
-    } else if input == "/q" || input == "/close" {
+    } else if input == ":q" || input == ":close" {
         UserCommand::Close
 
-    } else if input.starts_with("/") {
+    } else if input.starts_with(":") {
 
-        let no_start = input.trim_matches('/');
+        let no_start = input.trim_matches(':');
 
         if let Ok(num) = no_start.parse() {
             return UserCommand::ChangePage(num);
@@ -88,22 +88,20 @@ pub async fn run_command<B: Backend>(username: &str,
             // Create a Command to send to the client
             if let Err(_) = client_tx.send(command) {
                 return Err(io::Error::new(io::ErrorKind::ConnectionAborted, 
-                                          "Unable to send message"));
+                                          "Client died, nothing to do"));
             }
 
             // Display message in the Page
             instance.lock().await
-                .add_line(None, format!("You: {}", ms))?;
+                .add_line(None, &format!("You: {}", ms))?;
         },
 
         // Try to change the page. If cannot change, display not valid index;
         UserCommand::ChangePage(new_index) => {
             let result = instance.lock().await.set_current(*new_index);
-            
-            if result.is_err() {
+            if let Err(err) = result {
                 instance.lock().await
-                        .add_line(None, 
-                                  format!("{} is not a valid index", new_index))?; 
+                        .add_err(&err.to_string())?; 
             }
         },
 
@@ -120,8 +118,7 @@ pub async fn run_command<B: Backend>(username: &str,
         // Display a warning in the current page about the unknown command
         UserCommand::Unknown(c) => {
             let _ = instance.lock().await
-                .add_line(None,
-                          format!("{}: Unknown command", c))?;
+                .add_err(&format!("{}: Unknown command", c))?;
         },
     }
 

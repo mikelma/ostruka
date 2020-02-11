@@ -32,9 +32,9 @@ async fn main() {
 
     // Init pages
     let home_page = Page::new("Hello".to_string(), vec![
-        "--------------------------".to_string(),
-        "Welcome to Ostrich client!".to_string(),
-        "--------------------------".to_string(),
+        "---------------------------------------".to_string(),
+        "Welcome to ostruka the ostrich client!".to_string(),
+        "--------------------------------------".to_string(),
         "".to_string(),
     ]);
 
@@ -60,7 +60,7 @@ async fn main() {
             Message::ToSend(cmd) => {
                 if let Err(err) = client.send_cmd(&cmd).await {
                     instance.lock().await
-                        .add_line(None, format!("ERROR: {}", err))
+                        .add_err(&format!("SERVER: {}", err))
                         .unwrap();
                 }
             },
@@ -69,13 +69,13 @@ async fn main() {
 
                 if let Err(err) = result {
                     instance.lock().await
-                        .add_line(None, err.to_string())
+                        .add_err(&err.to_string())
                         .unwrap()
                 }
             },
             Message::Received(mesg) => {
                 instance.lock().await
-                    .add_line(None, mesg.to_string())
+                    .add_line(None, &mesg.to_string())
                     .unwrap();
             },
         }
