@@ -6,8 +6,8 @@ use tokio::sync::Mutex;
 
 use tui::Terminal;
 use tui::backend::Backend;
-use tui::widgets::{Widget, Block, Borders, Text, Paragraph, List, Tabs};
-use tui::layout::{Layout, Constraint, Direction, Corner};
+use tui::widgets::{Widget, Block, Borders, Text, Paragraph, Tabs};
+use tui::layout::{Layout, Constraint, Direction, Alignment};
 use tui::style::{Color, Style};
 
 // use ostruka::{Instance};
@@ -18,7 +18,9 @@ use crate::instance::Instance;
 pub async fn draw_tui<B : Backend>(terminal: &mut Terminal<B>, 
                          user_buff: &String, 
                          instance: &Arc<Mutex<Instance>>) -> Result<(), io::Error>{
-    
+
+    let percentages: Vec<u16> = vec![7, 82, 5];
+
     let chat = match instance.lock().await.get_chat() {
         Ok(c) => c,
         Err(e) => return Err(e),
@@ -26,7 +28,7 @@ pub async fn draw_tui<B : Backend>(terminal: &mut Terminal<B>,
 
     let names = instance.lock().await.names();
     let current_index = instance.lock().await.get_current();
-
+    
     terminal.draw(move |mut f| {
 
         let chunks = Layout::default()
@@ -34,9 +36,9 @@ pub async fn draw_tui<B : Backend>(terminal: &mut Terminal<B>,
             .margin(0)
             .constraints(
                 [
-                    Constraint::Percentage(7),
-                    Constraint::Percentage(82),
-                    Constraint::Percentage(5)
+                    Constraint::Percentage(percentages[0]),
+                    Constraint::Percentage(percentages[1]),
+                    Constraint::Percentage(percentages[2])
                 ].as_ref()
             )
             .split(f.size());
@@ -53,24 +55,34 @@ pub async fn draw_tui<B : Backend>(terminal: &mut Terminal<B>,
             .render(&mut f, chunks[0]);
         
         // Chat
-        let events = chat.iter()
-            .map(|txt| {
-                Text::raw(txt)
-            });
+        let skip = if chat.len() + 2 >= chunks[1].height as usize {
+            chat.len() + 2 - (chunks[1].height as usize)
+        } else {
+           0  
+        };
 
-        List::new(events)
-            .block(Block::default().borders(Borders::ALL).title("List"))
-            .start_corner(Corner::TopLeft)
-            .render(&mut f, chunks[1]);
+        let mut text = vec![];
+        chat.iter()
+            .skip(skip)
+            .for_each(|txt| {
+                text.push(Text::raw(format!("{}\n", txt)))
+            });
         
-        // User input box
+        Paragraph::new(text.iter())
+            .block(Block::default().borders(Borders::ALL))
+            .style(Style::default().fg(Color::White))
+            .alignment(Alignment::Left)
+            .wrap(true)
+            .render(&mut f, chunks[1]);
+
+        // User input box, include cursor
         let text = [
             Text::styled("> ", Style::default().fg(Color::Red)),
-            Text::raw(user_buff),
+            Text::raw(format!("{}▌", user_buff)),
         ];
 
         Paragraph::new(text.iter())
-                .block(Block::default().title("Input").borders(Borders::ALL))
+                .block(Block::default().borders(Borders::ALL))
                 .style(Style::default().fg(Color::White))
                 .wrap(true)
                 .render(&mut f, chunks[2]);
