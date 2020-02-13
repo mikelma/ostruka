@@ -6,6 +6,7 @@ use crossterm::event::{self, Event, KeyCode};
 use tui::Terminal;
 use tui::backend::TermionBackend;
 use termion::raw::IntoRawMode;
+use termion::screen::AlternateScreen;
 
 use std::io;
 use std::process;
@@ -19,15 +20,12 @@ mod ui;
 use instance::Instance;
 
 pub async fn handle_user(username: &str, mut tx: Tx, mut instance: Arc<Mutex<Instance>>) -> Result<(), io::Error> {
-    // Put stdout into raw mode
-    let stdout = io::stdout().into_raw_mode().unwrap();
-
-    // Prepare terminal
+    let stdout = io::stdout().into_raw_mode()?;
+    let stdout = AlternateScreen::from(stdout);
     let backend = TermionBackend::new(stdout);
-    let mut terminal = Terminal::new(backend).unwrap();
-
-    // Clear terminal once in the begining
-    terminal.clear().unwrap();
+    let mut terminal = Terminal::new(backend)?;
+    terminal.hide_cursor()?;
+    terminal.clear()?;
 
     // Init user's input buffer
     let mut user_buffer = String::new();
@@ -51,7 +49,7 @@ pub async fn handle_user(username: &str, mut tx: Tx, mut instance: Arc<Mutex<Ins
                         
                         // Show error to the user
                         instance.lock().await
-                            .add_err(&err.to_string())
+                            .add_err(&format!("[✗] ERR: {}", err))
                             .unwrap();
                     }
                     
