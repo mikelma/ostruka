@@ -7,7 +7,7 @@ use std::io::{self, Read};
 #[derive(Deserialize)]
 pub struct Config {
     pub user: String,
-    pub user_option_2: Option<String>,
+    pub user_option_2: String,
 
     pub password: String,
 

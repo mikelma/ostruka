@@ -25,14 +25,35 @@ async fn main() {
 
     let addr: SocketAddr = config.server_address.parse().unwrap();
 
-    // Create a client and log in
-    let (mut client, tx) = Client::log_in(&config.user, 
-                                          &config.password, 
-                                          addr).await
-        .unwrap_or_else(|err| {
-            eprintln!("Unable to log in as {} in {}. Error: {}", config.user, addr, err);
-            process::exit(1);
-        });
+    println!("Trying to log in as {} in {}...", 
+             config.user, config.server_address);
+
+    // Create a client and try to log in
+    let (mut client, tx) = match Client::log_in(&config.user, 
+                                                &config.password, 
+                                                addr).await {
+        Ok(result) => result,
+        Err(err) => {
+            // The first try was unsuccessful, try with the second option
+            eprintln!("Unable to log in as {} in {}. Error: {}", 
+                      config.user, addr, err);
+            println!("Trying to log in as {}", config.user_option_2);
+            
+            // Second try
+            match Client::log_in(&config.user_option_2,
+                                 &config.password,
+                                 addr).await {
+                Ok(result) => result,
+                Err(err) => {
+                    // Failed to log in again, time to exit
+                    eprintln!("Unable to log in as {} in {}. Error: {}", 
+                              config.user_option_2, addr, err);
+                    eprintln!("Cannot connect to server. Exiting...");
+                    process::exit(1);
+                },
+            }
+        },
+    };
 
     // Init pages
     let home_page = Page::new("Hello".to_string(), vec![

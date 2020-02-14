@@ -5,6 +5,7 @@ use std::process;
 pub struct Page{
     pub name : String,
     conversation : Vec<String>,
+    pub scroll: u16,
 }
 
 impl Page {
@@ -12,7 +13,7 @@ impl Page {
     /// Creates a new `Page` object. Fields to complete are the name of the 
     /// `Page`and the current conversation.
     pub fn new(name: String, conversation: Vec<String>) -> Page {
-        Page { name, conversation}
+        Page { name, conversation, scroll: 0 }
     }
 }
 
@@ -201,5 +202,14 @@ impl Instance {
         
         self.pages.remove(index);
         Ok(())
+    }
+        
+    /// Scroll up the current page
+    pub fn scroll_up(&mut self) {
+        self.pages[self.current].scroll += 1;
+    }
+
+    pub fn get_scroll(&self) -> u16 {
+       self.pages[self.current].scroll 
     }
 }

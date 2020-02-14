@@ -58,6 +58,7 @@ pub async fn handle_user(username: &str, mut tx: Tx, mut instance: Arc<Mutex<Ins
                 },
 
                 KeyCode::Tab => instance.lock().await.next_page(),
+                KeyCode::Up => instance.lock().await.scroll_up(),
                 _ => (),
             }
         }
@@ -65,6 +66,7 @@ pub async fn handle_user(username: &str, mut tx: Tx, mut instance: Arc<Mutex<Ins
         // Draw TUI
         // TODO: Use if let
         match ui::draw_tui(&mut terminal, 
+                           username,
                            &user_buffer, 
                            &instance).await {
             Ok(_) => (),

@@ -19,11 +19,13 @@ use crate::Tx;
 
 #[derive(Debug)]
 pub enum UserCommand {
-    Exit,
-    Message(String),
-    ChangePage(usize),
-    Join(String), // Conatins the name of the new page
-    Close,        // Contains the index of the Page to remove
+    Message(String),    // Contains a message to send
+    ChangePage(usize),  // Change the current page to the specified
+    Join(String),       // Conatins the name of the new page
+    ScrollUp,
+    ScrollDown,
+    Close,              // Close the current page
+    Exit,               // exit ostruka
     Unknown(String),
 }
 
@@ -120,6 +122,12 @@ pub async fn run_command<B: Backend>(username: &str,
         UserCommand::Unknown(c) => {
             let _ = instance.lock().await
                 .add_err(&format!("{}: Unknown command", c))?;
+        },
+        
+        // For ScrollDown and ScrollUp, that cannot be runned in this function
+        _ => {
+            let _ = instance.lock().await
+                .add_err("Cannot run command")?;
         },
     }
 

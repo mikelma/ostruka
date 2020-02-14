@@ -16,8 +16,9 @@ use crate::instance::Instance;
 // use crossterm::{execute, terminal};
 
 pub async fn draw_tui<B : Backend>(terminal: &mut Terminal<B>, 
-                         user_buff: &String, 
-                         instance: &Arc<Mutex<Instance>>) -> Result<(), io::Error>{
+                                   username: &str,
+                                   user_buff: &str, 
+                                   instance: &Arc<Mutex<Instance>>) -> Result<(), io::Error>{
 
     let percentages: Vec<u16> = vec![7, 82, 5];
 
@@ -28,6 +29,8 @@ pub async fn draw_tui<B : Backend>(terminal: &mut Terminal<B>,
 
     let names = instance.lock().await.names();
     let current_index = instance.lock().await.get_current();
+
+    let scroll = instance.lock().await.get_scroll();
     
     terminal.draw(move |mut f| {
 
@@ -67,17 +70,19 @@ pub async fn draw_tui<B : Backend>(terminal: &mut Terminal<B>,
             .for_each(|txt| {
                 text.push(Text::raw(format!("{}\n", txt)))
             });
-        
+
         Paragraph::new(text.iter())
             .block(Block::default().borders(Borders::ALL))
             .style(Style::default().fg(Color::White))
             .alignment(Alignment::Left)
             .wrap(true)
+            .scroll(scroll)
             .render(&mut f, chunks[1]);
 
         // User input box, include cursor
         let text = [
-            Text::styled("> ", Style::default().fg(Color::Red)),
+            Text::styled(format!("({})> ", username), 
+                         Style::default().fg(Color::LightMagenta)),
             Text::raw(format!("{}▌", user_buff)),
         ];
 
