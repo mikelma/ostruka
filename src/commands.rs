@@ -75,8 +75,7 @@ pub async fn run_command<B: Backend>(username: &str,
         // Exit: exit the program
         UserCommand::Exit => {
             terminal.clear().unwrap();
-            // process::exit(0)
-            panic!("Bye!");
+            process::exit(0)
         }, 
         
         UserCommand::Message(ms) => {

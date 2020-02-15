@@ -27,12 +27,19 @@ async fn main() {
 
     println!("Trying to log in as {} in {}...", 
              config.user, config.server_address);
+    
+    // The name variable is initialized in this point as its no clear wich of the username options
+    // is going to be chosen before trying to log in.
+    let user_alias: String;
 
     // Create a client and try to log in
     let (mut client, tx) = match Client::log_in(&config.user, 
                                                 &config.password, 
                                                 addr).await {
-        Ok(result) => result,
+        Ok(result) => {
+            user_alias = config.user; // The first alias is selected
+            result
+        },
         Err(err) => {
             // The first try was unsuccessful, try with the second option
             eprintln!("Unable to log in as {} in {}. Error: {}", 
@@ -43,7 +50,10 @@ async fn main() {
             match Client::log_in(&config.user_option_2,
                                  &config.password,
                                  addr).await {
-                Ok(result) => result,
+                Ok(result) => {
+                    user_alias = config.user_option_2; // The second alias is selected
+                    result
+                },
                 Err(err) => {
                     // Failed to log in again, time to exit
                     eprintln!("Unable to log in as {} in {}. Error: {}", 
@@ -75,7 +85,7 @@ async fn main() {
     
     // Launch the user handler
     tokio::spawn(async move {
-        if let Err(err) = handle_user(&config.user, tx, instance_clone).await {
+        if let Err(err) = handle_user(&user_alias, tx, instance_clone).await {
             panic!("Fatal error: {}", err);
         }
     });
