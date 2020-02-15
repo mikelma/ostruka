@@ -82,15 +82,20 @@ pub async fn run_command<B: Backend>(username: &str,
             // Get the target's name from the name of the current page
             let target = instance.lock().await
                 .get_name();
-            
-            let command = Command::Msg(username.to_string(),
-                                       target,
-                                       ms.to_string());
 
-            // Create a Command to send to the client
-            if let Err(_) = client_tx.send(command) {
-                return Err(io::Error::new(io::ErrorKind::ConnectionAborted, 
-                                          "Client died, nothing to do"));
+            // If the target is ostruka the user is in the main page,
+            // so ignore the send command and just print the message.
+            // Also ignore sending command if the message's length is 0.
+            if target != "ostruka" && ms.len() != 0 {
+                let command = Command::Msg(username.to_string(),
+                                           target,
+                                           ms.to_string());
+
+                // Create a Command to send to the client
+                if let Err(_) = client_tx.send(command) {
+                    return Err(io::Error::new(io::ErrorKind::ConnectionAborted, 
+                                              "Client died, nothing to do"));
+                }
             }
 
             // Display message in the Page

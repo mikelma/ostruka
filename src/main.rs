@@ -66,7 +66,7 @@ async fn main() {
     };
 
     // Init pages
-    let home_page = Page::new("Hello".to_string(), vec![
+    let home_page = Page::new("ostruka".to_string(), vec![
         "---------------------------------------".to_string(),
         "Welcome to ostruka the ostrich client!".to_string(),
         "--------------------------------------".to_string(),
