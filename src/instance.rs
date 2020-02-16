@@ -1,11 +1,12 @@
 use std::io;
 use std::collections::HashMap;
 use std::process;
+use std::ops::Range;
 
 pub struct Page{
     pub name : String,
     conversation : Vec<String>,
-    pub scroll: u16,
+    pub scroll: usize,
 }
 
 impl Page {
@@ -21,18 +22,19 @@ impl Page {
 pub struct Instance{
     pages: Vec<Page>,
     current : usize, // Idex of the current `Page`.
+    pub screen_len: Option<usize>,
 }
 
 impl Instance {
 
     /// Intitializes an empty `Instance` object.
     pub fn new() -> Instance {
-        Instance { pages : Vec::new(), current : 0}
+        Instance { pages : Vec::new(), current : 0, screen_len: None}
     }
     
     /// Intitializes `Instance` object from a vector of `Pages`.
     pub fn from(pages: Vec<Page>, current: usize) -> Instance {
-        Instance { pages , current : current}
+        Instance { pages , current : current, screen_len: None }
     }
     
     /// Adds a `Page` to the current `Instance`. If the page is already added, 
@@ -188,7 +190,8 @@ impl Instance {
             }
         }
     }
-
+    
+    /// Removes the current page and jumps to the next page.
     pub fn remove_current(&mut self) -> Result<(), io::Error> {
 
         if self.pages.len() == 1 {
@@ -204,12 +207,53 @@ impl Instance {
         Ok(())
     }
         
+    /// Scroll down the current page
+    pub fn scroll_down(&mut self) {
+        // Scroll always positive
+        if self.pages[self.current].scroll > 0 {
+            self.pages[self.current].scroll -= 1;
+        }
+    }
+
     /// Scroll up the current page
     pub fn scroll_up(&mut self) {
         self.pages[self.current].scroll += 1;
     }
+    
+    /// Returns the correct range of chat lines to be displayed (lines of the current page).
+    /// Also controlls the scroll value range before calculating the range.
+    pub fn display_range(&mut self, screen_len: usize) -> Range<usize> {
+        // Get values
+        let chat_len = self.pages[self.current].conversation.len();
+        let scroll = self.get_scroll();
 
-    pub fn get_scroll(&self) -> u16 {
+        // control scroll value bounds
+        if chat_len + 2 < screen_len {
+            self.pages[self.current].scroll = 0;
+        } else {
+            if scroll > chat_len + 2 - screen_len {
+                self.pages[self.current].scroll = chat_len + 2 - screen_len;
+            }
+        }
+        // Get new scroll value 
+        let scroll = self.get_scroll();
+        
+        // Select the correct range of chat lines to display
+        // It is not allowed to scroll if the chat fits in the screen height
+        if chat_len + 2 >= screen_len && chat_len+2-screen_len >= scroll {
+            (chat_len+2-screen_len-scroll..chat_len-scroll)
+        } else {
+            (0..chat_len)
+        }
+    }
+
+    fn get_scroll(&self) -> usize {
        self.pages[self.current].scroll 
     }
+    
+    /// Sets the scroll value of the current page to zero
+    pub fn scroll_zero(&mut self) {
+       self.pages[self.current].scroll = 0;
+    }
+     
 }

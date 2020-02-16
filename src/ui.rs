@@ -10,43 +10,43 @@ use tui::widgets::{Widget, Block, Borders, Text, Paragraph, Tabs};
 use tui::layout::{Layout, Constraint, Direction, Alignment};
 use tui::style::{Color, Style};
 
-// use ostruka::{Instance};
 use crate::instance::Instance;
-
-// use crossterm::{execute, terminal};
 
 pub async fn draw_tui<B : Backend>(terminal: &mut Terminal<B>, 
                                    username: &str,
                                    user_buff: &str, 
                                    instance: &Arc<Mutex<Instance>>) -> Result<(), io::Error>{
-
-    let percentages: Vec<u16> = vec![7, 82, 5];
-
+    
+    // Get the chat vector of the current page
     let chat = match instance.lock().await.get_chat() {
         Ok(c) => c,
         Err(e) => return Err(e),
     };
-
+    // Get a vector with the names of all active pages
     let names = instance.lock().await.names();
+    // Current pages index
     let current_index = instance.lock().await.get_current();
 
-    let scroll = instance.lock().await.get_scroll();
+    // Create the layout, divide the screen
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(0)
+        .constraints(
+            [
+                Constraint::Percentage(7),
+                Constraint::Percentage(82),
+                Constraint::Percentage(5)
+            ].as_ref()
+        )
+        .split(terminal.size()?);
+
+    // Calculate the range of chat lines to be displayed in the text box
+    // This method also controlls the scroll value
+    let range = instance.lock()
+        .await
+        .display_range(chunks[1].height as usize);
     
     terminal.draw(move |mut f| {
-
-        let chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .margin(0)
-            .constraints(
-                [
-                    Constraint::Percentage(percentages[0]),
-                    Constraint::Percentage(percentages[1]),
-                    Constraint::Percentage(percentages[2])
-                ].as_ref()
-            )
-            .split(f.size());
-        
-
         // Tabs
         Tabs::default()
             .block(Block::default().borders(Borders::ALL))
@@ -57,35 +57,28 @@ pub async fn draw_tui<B : Backend>(terminal: &mut Terminal<B>,
             .divider("|")
             .render(&mut f, chunks[0]);
         
-        // Chat
-        let skip = if chat.len() + 2 >= chunks[1].height as usize {
-            chat.len() + 2 - (chunks[1].height as usize)
-        } else {
-           0  
-        };
-
+        // Get the text vector from the chat of the current page
         let mut text = vec![];
-        chat.iter()
-            .skip(skip)
+        chat[range]
+            .iter()
             .for_each(|txt| {
                 text.push(Text::raw(format!("{}\n", txt)))
             });
-
+        
+        // Draw the text box (Paragraph)
         Paragraph::new(text.iter())
             .block(Block::default().borders(Borders::ALL))
             .style(Style::default().fg(Color::White))
             .alignment(Alignment::Left)
             .wrap(true)
-            .scroll(scroll)
             .render(&mut f, chunks[1]);
 
-        // User input box, include cursor
+        // User input box, includes cursor and the alias of the user
         let text = [
             Text::styled(format!("({})> ", username), 
                          Style::default().fg(Color::LightMagenta)),
             Text::raw(format!("{}▌", user_buff)),
         ];
-
         Paragraph::new(text.iter())
                 .block(Block::default().borders(Borders::ALL))
                 .style(Style::default().fg(Color::White))

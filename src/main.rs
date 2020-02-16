@@ -115,6 +115,6 @@ async fn main() {
             },
         }
         // TODO : Is this needed? maybe to prevent DDOS?
-        delay_for(Duration::from_millis(100)).await;
+        // delay_for(Duration::from_millis(100)).await;
     }
 }

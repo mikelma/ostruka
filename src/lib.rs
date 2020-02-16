@@ -31,10 +31,19 @@ pub async fn handle_user(username: &str, mut tx: Tx, mut instance: Arc<Mutex<Ins
     let mut user_buffer = String::new();
 
     loop {
+        // Draw TUI
+        if let Err(err) = ui::draw_tui(&mut terminal, 
+                                       username,
+                                       &user_buffer, 
+                                       &instance).await {
+                terminal.clear().unwrap();
+                println!("Fatal error, unable to draw TUI: {}", err);
+                process::exit(1);
+        }
 
-        if let Some(spacial_key) = buffer_update(&mut user_buffer).unwrap() {
+        if let Some(special_key) = buffer_update(&mut user_buffer).unwrap() {
             // Process the special key
-            match spacial_key {
+            match special_key {
                 
                 // The command is finished
                 KeyCode::Enter => {
@@ -58,29 +67,15 @@ pub async fn handle_user(username: &str, mut tx: Tx, mut instance: Arc<Mutex<Ins
                 },
 
                 KeyCode::Tab => instance.lock().await.next_page(),
+                KeyCode::Down => instance.lock().await.scroll_down(),
                 KeyCode::Up => instance.lock().await.scroll_up(),
                 _ => (),
             }
-        }
-
-        // Draw TUI
-        // TODO: Use if let
-        match ui::draw_tui(&mut terminal, 
-                           username,
-                           &user_buffer, 
-                           &instance).await {
-            Ok(_) => (),
-            Err(e) => {
-                terminal.clear().unwrap();
-                println!("Fatal error, unable to draw TUI: {}", e);
-                process::exit(1);
-            },
         }
     }
 }
 
 pub fn buffer_update(buff: &mut String) -> crossterm::Result<(Option<KeyCode>)> {
-
     // `poll()` waits for an `Event` for a given time period
     if event::poll(Duration::from_millis(100))? {
         match event::read()? {
