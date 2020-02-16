@@ -1,5 +1,5 @@
 use std::io;
-use std::collections::HashMap;
+// use std::collections::HashMap;
 use std::process;
 use std::ops::Range;
 
@@ -132,7 +132,7 @@ impl Instance {
         Ok(())
     }
     
-    // Adds a Command to the page of sender, if sender does not exist creates a new page
+    /// Adds a Command to the page of sender, if sender does not exist creates a new page.
     pub fn add_msg(&mut self, sender: &str, txt: &str) -> Result<(), io::Error> {
         // Check if a page with the sender exists
         let index = self.names()
@@ -170,7 +170,8 @@ impl Instance {
 
         Ok(())
     }
-
+    
+    /*
     pub fn update(&mut self, update: &mut HashMap<String, Vec<String>>) {
 
         for key in update.keys() {
@@ -190,6 +191,7 @@ impl Instance {
             }
         }
     }
+    */
     
     /// Removes the current page and jumps to the next page.
     pub fn remove_current(&mut self) -> Result<(), io::Error> {

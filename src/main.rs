@@ -1,7 +1,7 @@
 use tokio;
 use tokio::sync::Mutex;
 use tokio::stream::StreamExt;
-use tokio::time::delay_for;
+//use tokio::time::delay_for;
 
 use ostrich_core::{Command};
 use ostruka_core::{Client, Message};
@@ -9,7 +9,7 @@ use ostruka_core::{Client, Message};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::process;
-use std::time::Duration;
+//use std::time::Duration;
 
 use ostruka::{handle_user, instance};
 use instance::{Instance, Page};
@@ -114,7 +114,7 @@ async fn main() {
                     .unwrap();
             },
         }
-        // TODO : Is this needed? maybe to prevent DDOS?
+        // TODO : Is this needed?
         // delay_for(Duration::from_millis(100)).await;
     }
 }
