@@ -113,9 +113,17 @@ pub async fn run_command<B: Backend>(username: &str,
         },
 
         UserCommand::Join(name) => {
-            instance.lock().await.add(
-                Page::new(name.clone(), vec![format!("Joined {}!", name)])
-            )?;
+            // Send a Join command
+            if let Err(_) = client_tx.send(Command::Join(name.clone())) {
+                // Display the error in the current page
+                instance.lock().await.add_err("Join command error").unwrap();
+            } else {
+                // If send successful, add a new page
+                instance.lock().await.add(
+                    Page::new(name.clone(), vec![format!("Joined {}!", name)])
+                )?;
+            }
+
         },
 
         UserCommand::Close => {
@@ -137,4 +145,3 @@ pub async fn run_command<B: Backend>(username: &str,
 
     Ok(())
 }
-

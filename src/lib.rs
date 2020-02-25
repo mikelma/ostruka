@@ -20,6 +20,7 @@ mod ui;
 use instance::Instance;
 
 pub async fn handle_user(username: &str, mut tx: Tx, mut instance: Arc<Mutex<Instance>>) -> Result<(), io::Error> {
+    // Set terminal into raw mode
     let stdout = io::stdout().into_raw_mode()?;
     let stdout = AlternateScreen::from(stdout);
     let backend = TermionBackend::new(stdout);
@@ -37,7 +38,7 @@ pub async fn handle_user(username: &str, mut tx: Tx, mut instance: Arc<Mutex<Ins
                                        &user_buffer, 
                                        &instance).await {
                 terminal.clear().unwrap();
-                println!("Fatal error, unable to draw TUI: {}", err);
+                eprintln!("Fatal error, unable to draw TUI: {}", err);
                 process::exit(1);
         }
 
