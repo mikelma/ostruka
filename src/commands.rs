@@ -114,9 +114,9 @@ pub async fn run_command<B: Backend>(username: &str,
 
         UserCommand::Join(name) => {
             // Send a Join command
-            if let Err(_) = client_tx.send(Command::Join(name.clone())) {
+            if let Err(e) = client_tx.send(Command::Join(name.clone())) {
                 // Display the error in the current page
-                instance.lock().await.add_err("Join command error").unwrap();
+                instance.lock().await.add_err(&format!("Join command error: {}", e)).unwrap();
             } else {
                 // If send successful, add a new page
                 instance.lock().await.add(
