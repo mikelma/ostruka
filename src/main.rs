@@ -99,8 +99,8 @@ async fn main() {
                         .unwrap();
                 }
             },
-            Message::Received(Command::Msg(sender, _t, txt)) => {
-                let result = instance.lock().await.add_msg(&sender, &txt);
+            Message::Received(Command::Msg(sender, target, txt)) => {
+                let result = instance.lock().await.add_msg(&sender, &target, &txt);
 
                 if let Err(err) = result {
                     instance.lock().await

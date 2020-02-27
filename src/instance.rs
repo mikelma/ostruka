@@ -133,11 +133,19 @@ impl Instance {
     }
     
     /// Adds a Command to the page of sender, if sender does not exist creates a new page.
-    pub fn add_msg(&mut self, sender: &str, txt: &str) -> Result<(), io::Error> {
+    /// If target's name starts with '#', recognize the message as a group message.
+    pub fn add_msg(&mut self, sender: &str, target: &str, txt: &str) -> Result<(), io::Error> {
+        // Determine if the message is a group message or not
+        let name = if target.starts_with("#") {
+            target   
+        } else {
+            sender
+        };
+
         // Check if a page with the sender exists
         let index = self.names()
             .iter()
-            .position(|name| *name == sender);
+            .position(|page_name| *page_name == name);
 
         let formatted = format!("[{}]: {}", sender, txt);
 
