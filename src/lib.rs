@@ -76,7 +76,7 @@ pub async fn handle_user(username: &str, mut tx: Tx, mut instance: Arc<Mutex<Ins
     }
 }
 
-pub fn buffer_update(buff: &mut String) -> crossterm::Result<(Option<KeyCode>)> {
+pub fn buffer_update(buff: &mut String) -> crossterm::Result<Option<KeyCode>> {
     // `poll()` waits for an `Event` for a given time period
     if event::poll(Duration::from_millis(100))? {
         match event::read()? {

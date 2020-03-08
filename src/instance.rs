@@ -1,6 +1,4 @@
 use std::io;
-// use std::collections::HashMap;
-use std::process;
 use std::ops::Range;
 
 pub struct Page{
@@ -34,7 +32,7 @@ impl Instance {
     
     /// Intitializes `Instance` object from a vector of `Pages`.
     pub fn from(pages: Vec<Page>, current: usize) -> Instance {
-        Instance { pages , current : current, screen_len: None }
+        Instance { pages, current, screen_len: None }
     }
     
     /// Adds a `Page` to the current `Instance`. If the page is already added, 
@@ -239,10 +237,9 @@ impl Instance {
         // control scroll value bounds
         if chat_len + 2 < screen_len {
             self.pages[self.current].scroll = 0;
-        } else {
-            if scroll > chat_len + 2 - screen_len {
-                self.pages[self.current].scroll = chat_len + 2 - screen_len;
-            }
+
+        } else if scroll > chat_len + 2 - screen_len {
+            self.pages[self.current].scroll = chat_len + 2 - screen_len;
         }
         // Get new scroll value 
         let scroll = self.get_scroll();

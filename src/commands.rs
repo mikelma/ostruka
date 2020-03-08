@@ -29,9 +29,8 @@ pub enum UserCommand {
     Unknown(String),
 }
 
-pub fn parse_command(input: &String) -> UserCommand {
-
-    let input = input.to_lowercase(); 
+pub fn parse_command(input: &str) -> UserCommand {
+    // let input = input.to_lowercase(); 
 
     // Exit command
     if input.starts_with(":exit") {
@@ -40,25 +39,28 @@ pub fn parse_command(input: &String) -> UserCommand {
     // Join command
     } else if input.starts_with(":join") {
 
-        let mut join_name = input.clone();
+        let mut join_name = input.to_string();
         let _= join_name.drain(..6); // 6, includes whitespace
 
         UserCommand::Join(join_name)
 
+    // Close command
     } else if input == ":q" || input == ":close" {
         UserCommand::Close
 
-    } else if input.starts_with(":") {
+    } else if input.starts_with(':') {
 
         let no_start = input.trim_matches(':');
-
+        
+        // ChangePage commad
         if let Ok(num) = no_start.parse() {
             return UserCommand::ChangePage(num);
         }
 
-        // Unknown
-        return UserCommand::Unknown(input);
+        // Unknown command
+        UserCommand::Unknown(input.to_string())
 
+    // Message command 
     } else {
         UserCommand::Message(input.to_string())
     }
@@ -87,7 +89,7 @@ pub async fn run_command<B: Backend>(username: &str,
             // If the target is ostruka the user is in the main page,
             // so ignore the send command and just print the message.
             // Also ignore sending command if the message's length is 0.
-            if target != "ostruka" && ms.len() != 0 {
+            if target != "ostruka" && !ms.is_empty() {
                 let command = Command::Msg(username.to_string(),
                                            target,
                                            ms.to_string());
@@ -97,11 +99,10 @@ pub async fn run_command<B: Backend>(username: &str,
                     return Err(io::Error::new(io::ErrorKind::ConnectionAborted, 
                                               "Client died, nothing to do"));
                 }
+                // Display message in the Page
+                instance.lock().await
+                    .add_line(None, &format!("({})> {}", username, ms))?;
             }
-
-            // Display message in the Page
-            // instance.lock().await
-            //     .add_line(None, &format!("You: {}", ms))?;
         },
 
         // Try to change the page. If cannot change, display not valid index;
