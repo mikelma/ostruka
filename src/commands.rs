@@ -74,6 +74,7 @@ pub async fn run_command<B: Backend>(username: &str,
         
         // Exit: exit the program
         UserCommand::Exit => {
+            terminal.show_cursor()?;
             terminal.clear().unwrap();
             process::exit(0)
         }, 
@@ -99,8 +100,8 @@ pub async fn run_command<B: Backend>(username: &str,
             }
 
             // Display message in the Page
-            instance.lock().await
-                .add_line(None, &format!("You: {}", ms))?;
+            // instance.lock().await
+            //     .add_line(None, &format!("You: {}", ms))?;
         },
 
         // Try to change the page. If cannot change, display not valid index;

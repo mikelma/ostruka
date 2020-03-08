@@ -204,16 +204,11 @@ impl Instance {
     /// Removes the current page and jumps to the next page.
     pub fn remove_current(&mut self) -> Result<(), io::Error> {
         // The user is in the main page and has more pages active
-        if self.current == 0 && self.pages.len() > 1 {
+        if self.current == 0 {
             return Err(io::Error::new(io::ErrorKind::PermissionDenied,
-                    "Cannot quit main page when more than one pages are open"))
+                    "Cannot quit main page, run :exit to quit ostruka"))
         }
 
-        // If the user is in the main page and there are no more pages active, quit
-        if self.current == 0 && self.pages.len() == 1 {
-            process::exit(0);
-        }
-    
         // The user wants to remove an active page
         let index = self.current; // Save the index
         self.next_page();
