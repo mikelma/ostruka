@@ -203,16 +203,20 @@ impl Instance {
     
     /// Removes the current page and jumps to the next page.
     pub fn remove_current(&mut self) -> Result<(), io::Error> {
-
-        if self.pages.len() == 1 {
-            // If the user is in the home directory, quit
-            process::exit(0);
+        // The user is in the main page and has more pages active
+        if self.current == 0 && self.pages.len() > 1 {
+            return Err(io::Error::new(io::ErrorKind::PermissionDenied,
+                    "Cannot quit main page when more than one pages are open"))
         }
 
-        let index = self.current;
-
+        // If the user is in the main page and there are no more pages active, quit
+        if self.current == 0 && self.pages.len() == 1 {
+            process::exit(0);
+        }
+    
+        // The user wants to remove an active page
+        let index = self.current; // Save the index
         self.next_page();
-        
         self.pages.remove(index);
         Ok(())
     }
