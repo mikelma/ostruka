@@ -5,6 +5,7 @@ pub struct Page{
     pub name : String,
     conversation : Vec<String>,
     pub scroll: usize,
+    pub n_lines: usize,
 }
 
 impl Page {
@@ -12,11 +13,12 @@ impl Page {
     /// Creates a new `Page` object. Fields to complete are the name of the 
     /// `Page`and the current conversation.
     pub fn new(name: String, conversation: Vec<String>) -> Page {
-        Page { name, conversation, scroll: 0 }
+        let n_lines = conversation.len();
+        Page { name, conversation, scroll: 0, n_lines }
     }
 }
 
-/// Holds a Krypto instance. It contains the instances's collection of `Pages`.
+/// Holds an ostruka instance. It contains the instances's collection of `Pages`.
 pub struct Instance{
     pages: Vec<Page>,
     current : usize, // Idex of the current `Page`.
@@ -53,7 +55,6 @@ impl Instance {
 
     /// Returns a vector of names of the current `Page`s inside the `Instance`.
     pub fn names(&self) -> Vec<String> {
-
         if self.pages.len() > 0 {
             let mut names_list = Vec::new();
             self.pages.iter()
@@ -113,7 +114,6 @@ impl Instance {
     } 
 
     pub fn add_line(&mut self, index: Option<usize>, message: &str) -> Result<(), io::Error> {
-
         let index = match index {
             Some(i) => i,
             None => self.current,
@@ -125,7 +125,15 @@ impl Instance {
                                "The given index is not a valid index. Number too large."));
         }
         
-        self.pages[index].conversation.push(message.to_string());
+        if message.contains('\n') {
+            for line in message.split('\n') {
+                self.pages[index].conversation.push(line.to_string());
+                self.pages[index].n_lines += 1;
+            }
+        } else {
+            self.pages[index].conversation.push(message.to_string());
+            self.pages[index].n_lines += 1;
+        }
 
         Ok(())
     }
@@ -231,7 +239,7 @@ impl Instance {
     /// Also controlls the scroll value range before calculating the range.
     pub fn display_range(&mut self, screen_len: usize) -> Range<usize> {
         // Get values
-        let chat_len = self.pages[self.current].conversation.len();
+        let chat_len = self.pages[self.current].n_lines;
         let scroll = self.get_scroll();
 
         // control scroll value bounds
