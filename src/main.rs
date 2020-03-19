@@ -92,6 +92,7 @@ async fn main() {
 
     while let Some(Ok(mesg)) = client.next().await {
         match mesg {
+            // Send a command to the server
             Message::ToSend(cmd) => {
                 if let Err(err) = client.send_cmd(&cmd).await {
                     instance.lock().await
@@ -99,6 +100,8 @@ async fn main() {
                         .unwrap();
                 }
             },
+            // Received a MSG command from server. Locate the message 
+            // in its correspondig page
             Message::Received(Command::Msg(sender, target, txt)) => {
                 let result = instance.lock().await.add_msg(&sender, &target, &txt);
 
@@ -108,6 +111,16 @@ async fn main() {
                         .unwrap()
                 }
             },
+            Message::Received(Command::ListUsr(group, users)) => {
+                let result = instance.lock().await.add_msg(&group, &group, &users);
+
+                if let Err(err) = result {
+                    instance.lock().await
+                        .add_err(&err.to_string())
+                        .unwrap()
+                }
+            },
+            // Received messages from the server that are not messages are treated here
             Message::Received(mesg) => {
                 instance.lock().await
                     .add_line(None, &mesg.to_string())

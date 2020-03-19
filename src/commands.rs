@@ -22,6 +22,7 @@ pub enum UserCommand {
     Message(String),    // Contains a message to send
     ChangePage(usize),  // Change the current page to the specified
     Join(String),       // Conatins the name of the new page
+    ListUsr,
     ScrollUp,
     ScrollDown,
     Close,              // Close the current page
@@ -37,12 +38,15 @@ pub fn parse_command(input: &str) -> UserCommand {
         UserCommand::Exit
     
     // Join command
-    } else if input.starts_with(":join") {
-
+    } else if input.starts_with(":join") && input.len() > 5{
         let mut join_name = input.to_string();
         let _= join_name.drain(..6); // 6, includes whitespace
 
         UserCommand::Join(join_name)
+    
+    // ListUsr command
+    } else if input.starts_with(":ls") {
+        UserCommand::ListUsr
 
     // Close command
     } else if input == ":q" || input == ":close" {
@@ -125,17 +129,38 @@ pub async fn run_command<B: Backend>(username: &str,
                     Page::new(name.clone(), vec![format!("Joined {}!", name)])
                 )?;
             }
+        },
 
+        UserCommand::ListUsr => {
+            // Get current page's name
+            let group_name = instance.lock().await.get_name();
+            // Prepare the ListUsr command
+            let cmd = Command::ListUsr(group_name.to_string(), 
+                String::new()); 
+            // Send command
+            if let Err(e) = client_tx.send(cmd) {
+                // Display the error in the current page
+                instance.lock().await.add_err(
+                    &format!("Join command error: {}", e)).unwrap();
+            } 
         },
 
         UserCommand::Close => {
+            let name = instance.lock().await.get_name();
+            // Remove the page the user is currently in
             instance.lock().await.remove_current()?;
+            // Remove of the page was ok, now send a leave command 
+            // to the server in order to close the connection with the target
+            if let Err(_) = client_tx.send(Command::Leave(name)) {
+                return Err(io::Error::new(io::ErrorKind::ConnectionAborted, 
+                                          "Client died, nothing to do"));
+            }
         },
         
         // Display a warning in the current page about the unknown command
         UserCommand::Unknown(c) => {
             let _ = instance.lock().await
-                .add_err(&format!("{}: Unknown command", c))?;
+                .add_err(&format!("Unknown command: {}", c))?;
         },
         
         // For ScrollDown and ScrollUp, that cannot be runned in this function
@@ -144,6 +169,5 @@ pub async fn run_command<B: Backend>(username: &str,
                 .add_err("Cannot run command")?;
         },
     }
-
     Ok(())
 }
