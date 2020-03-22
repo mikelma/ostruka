@@ -13,7 +13,7 @@ extern crate sha1;
 
 use crate::instance::{Instance, Page};
 
-use ostrich_core::Command;
+use ostrich_core::*;
 
 use crate::Tx;
 
@@ -44,10 +44,6 @@ pub fn parse_command(input: &str) -> UserCommand {
 
         UserCommand::Join(join_name)
     
-    // ListUsr command
-    } else if input.starts_with(":ls") {
-        UserCommand::ListUsr
-
     // Close command
     } else if input == ":q" || input == ":close" {
         UserCommand::Close
@@ -77,8 +73,6 @@ pub async fn run_command<B: Backend>(username: &str,
                                      client_tx: &mut Tx) -> Result<(), io::Error> {
 
     match command {
-        
-        // Exit: exit the program
         UserCommand::Exit => {
             terminal.show_cursor()?;
             terminal.clear().unwrap();
@@ -124,6 +118,16 @@ pub async fn run_command<B: Backend>(username: &str,
                 // Display the error in the current page
                 instance.lock().await.add_err(&format!("Join command error: {}", e)).unwrap();
             } else {
+                // If the joined chat is a group, reques a list of online users
+                if name.starts_with('#') {
+                    // Sending a ListUsr command to the server requests a list of all users in a
+                    // group. The fields in this ListUsr commands are ignored by the server. 
+                    let cmd = Command::ListUsr(name.to_string(), ListUsrOperation::Add, String::new());
+                    if let Err(_) = client_tx.send(cmd) {
+                        return Err(io::Error::new(io::ErrorKind::ConnectionAborted, 
+                                                  "Client died, nothing to do"));
+                    }
+                }
                 // If send successful, add a new page
                 instance.lock().await.add(
                     Page::new(name.clone(), vec![format!("Joined {}!", name)])
@@ -136,12 +140,13 @@ pub async fn run_command<B: Backend>(username: &str,
             let group_name = instance.lock().await.get_name();
             // Prepare the ListUsr command
             let cmd = Command::ListUsr(group_name.to_string(), 
+                ListUsrOperation::Add, // This will be ignored by the server
                 String::new()); 
             // Send command
             if let Err(e) = client_tx.send(cmd) {
                 // Display the error in the current page
                 instance.lock().await.add_err(
-                    &format!("Join command error: {}", e)).unwrap();
+                    &format!("ListUsr command error: {}", e)).unwrap();
             } 
         },
 

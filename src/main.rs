@@ -132,7 +132,5 @@ async fn main() {
                     .unwrap();
             },
         }
-        // TODO : Is this needed?
-        // delay_for(Duration::from_millis(100)).await;
     }
 }
