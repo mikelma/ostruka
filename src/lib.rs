@@ -93,7 +93,6 @@ pub fn buffer_update(buff: &mut String) -> crossterm::Result<Option<KeyCode>> {
                     
                     // Else, return the special key pressed
                     _ => return Ok(Some(ev.code)),
-
                 }
             },
             _ => (),
