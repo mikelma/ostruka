@@ -250,7 +250,7 @@ impl Instance {
     }
     
     /// Adds a given vector of new usernames to the online_users field of the `Page` of 
-    /// the specified name.
+    /// the specified name. If the given `Page` name does not exist, nothing is done.
     pub fn add_online_users(&mut self, page_name: &str, new_users: Vec<String>) {
         if let Some(index) = self.pages.iter_mut()
             .position(|page| page.name == page_name) {
@@ -265,7 +265,8 @@ impl Instance {
     
     /// Removes usernames in the online_users field of the `Page` specified determined by 
     /// a vector of given usernames. If a username of the given vector does not exist in the
-    /// online_users of the selected `Page`, the username to remove is ignored.
+    /// online_users of the selected `Page`, the username to remove is ignored. Also,
+    /// if the given `Page` name does not exist, nothing is done.
     pub fn remove_online_users(&mut self, page_name: &str, users: Vec<String>) {
         if let Some(index) = self.pages.iter_mut() 
             .position(|page| page.name == page_name) {
