@@ -3,7 +3,7 @@ use tokio::sync::Mutex;
 use tokio::stream::StreamExt;
 //use tokio::time::delay_for;
 
-use ostrich_core::{Command};
+use ostrich_core::*;
 use ostruka_core::{Client, Message};
 
 use std::net::SocketAddr;
@@ -111,13 +111,18 @@ async fn main() {
                         .unwrap()
                 }
             },
-            Message::Received(Command::ListUsr(group, users)) => {
-                let result = instance.lock().await.add_msg(&group, &group, &users);
-
-                if let Err(err) = result {
-                    instance.lock().await
-                        .add_err(&err.to_string())
-                        .unwrap()
+            Message::Received(Command::ListUsr(group, op, users)) => {
+                // Users are sent by the server in a single string divided by newline
+                let splitted = users.split('\n');
+                // let list: Vec<String> = splitted.map(|s| s.trim().to_string()).collect();
+                
+                let mut list: Vec<String> = vec![];
+                // NOTE: This if len > 0 condition is needed as the splitted vector might 
+                // contain some empty items sometimes.
+                splitted.for_each(|s| if s.len() > 0 { list.push(s.to_string()) });
+                match op {
+                    ListUsrOperation::Add => instance.lock().await.add_online_users(&group, list),
+                    ListUsrOperation::Remove => instance.lock().await.remove_online_users(&group, list),
                 }
             },
             // Received messages from the server that are not messages are treated here
