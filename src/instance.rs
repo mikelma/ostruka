@@ -1,11 +1,12 @@
 use std::io;
 use std::ops::Range;
 
-pub struct Page{
+pub struct Page {
     pub name : String,
     conversation : Vec<String>,
     pub scroll: usize,
     pub n_lines: usize,
+    online_users: Option<Vec<String>>,
 }
 
 impl Page {
@@ -14,13 +15,13 @@ impl Page {
     /// `Page`and the current conversation.
     pub fn new(name: String, conversation: Vec<String>) -> Page {
         let n_lines = conversation.len();
-        Page { name, conversation, scroll: 0, n_lines }
+        Page { name, conversation, scroll: 0, n_lines, online_users: None}
     }
 }
 
 /// Holds an ostruka instance. It contains the instances's collection of `Pages`.
-pub struct Instance{
-    pages: Vec<Page>,
+pub struct Instance {
+    pages: Vec<Page>, // NOTE: Upgrade to hashmap
     current : usize, // Idex of the current `Page`.
     pub screen_len: Option<usize>,
 }
@@ -185,28 +186,6 @@ impl Instance {
         Ok(())
     }
     
-    /*
-    pub fn update(&mut self, update: &mut HashMap<String, Vec<String>>) {
-
-        for key in update.keys() {
-            let sender = match key.to_string().split('@').nth(0){
-                Some(s) => s.to_string(),
-                None => continue, // NOTE, duda ondo dagoen
-            };
-
-            let mut data = match update.get(key) {
-                Some(d) => d.clone(), // TODO: Change clone, get_mut()
-                None => continue,
-            };
-            
-            match self.names().binary_search(&sender) {
-                Ok(index) => self.add_chat(index, &mut data).unwrap(),
-                Err(_) => continue, // TODO Create a new page !!
-            }
-        }
-    }
-    */
-    
     /// Removes the current page and jumps to the next page.
     pub fn remove_current(&mut self) -> Result<(), io::Error> {
         // The user is in the main page and has more pages active
@@ -269,5 +248,35 @@ impl Instance {
     pub fn scroll_zero(&mut self) {
        self.pages[self.current].scroll = 0;
     }
-     
+    
+    pub fn add_online_users(&mut self, page_name: &str, new_users: Vec<String>) {
+        if let Some(index) = self.pages.iter_mut()
+            .position(|page| page.name == page_name) {
+
+            if let Some(list) = &mut self.pages[index].online_users {
+                new_users.iter().for_each(|x| list.push(x.clone()));
+            } else {
+                self.pages[index].online_users = Some(new_users);
+            }
+        }
+    }
+
+    pub fn remove_online_users(&mut self, page_name: &str, users: Vec<String>) {
+        if let Some(index) = self.pages.iter_mut() 
+            .position(|page| page.name == page_name) {
+
+                if let Some(list) = &mut self.pages[index].online_users {
+                    users.iter()
+                        .for_each(|user| {
+                            if let Some(i) = list.iter().position(|x| x == user) {
+                                list.remove(i);
+                            }
+                        });
+                }
+        }
+    }
+
+    pub fn get_online_users(&self) -> Option<Vec<String>> {
+        self.pages[self.current].online_users.clone()
+    }
 }
